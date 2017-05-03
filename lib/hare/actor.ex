@@ -105,6 +105,7 @@ defmodule Hare.Actor do
 
   @doc false
   def init({conn, mod, initial}) do
+    Process.flag(:trap_exit, true)
     case mod.init(initial) do
       {:ok, given} ->
         {:connect, :init, State.new(conn, mod, given)}
