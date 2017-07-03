@@ -15,7 +15,7 @@ defmodule Hare.Context.Action do
     * `declare_queue` - (`Action.DeclareQueue`) declares a queue
     * `queue` - (`Action.DeclareQueue`) alias for `:declare_queue`
     * `delete_queue` - (`Action.DeleteQueue`) deletes a queue
-    * `declare_server_named_queue -  (`Action.DeclareServerNamedQueue`) declares a server-named queue
+    * `declare_server_named_queue` -  (`Action.DeclareServerNamedQueue`) declares a server-named queue
     * `server_named_queue` - (`Action.DeclareServerNamedQueue`) alias for `:declare_server_named_queue`
     * `bind` - (`Action.Bind`) binds a queue to an exchange
     * `unbind` - (`Action.Unbind`) unbinds a queue from an exchange
