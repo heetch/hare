@@ -243,7 +243,7 @@ defmodule Hare.RPC.ClientTest do
   test "disconnect during request" do
     {:ok, conn} = Conn.start_link(config:  [],
                                   adapter: Adapter,
-                                  backoff: [100])
+                                  backoff: [500])
 
     config = [exchange: [name: "foo", type: :fanout]]
 
