@@ -1,4 +1,6 @@
 defmodule Hare.Actor do
+  @moduledoc false
+
   @callback init(args :: term) ::
     {:ok, state :: term} |
     :ignore |

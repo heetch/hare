@@ -3,11 +3,11 @@ defmodule Hare.Mixfile do
 
   def project do
     [app: :hare,
-     version: "0.1.9",
-     elixir: "~> 1.3",
+     version: "0.2.0",
+     elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     description: "Some abstractions to interact with a AMQP broker",
+     description: "Some abstractions to interact with a AMQP broker (SaleMove fork)",
      package: package(),
      deps: deps(),
      dialyzer: [
@@ -28,8 +28,9 @@ defmodule Hare.Mixfile do
   end
 
   defp package do
-    [maintainers: ["Jaime Cabot"],
+    [name: :salemove_hare,
+     maintainers: ["SaleMove team"],
      licenses: ["Apache 2"],
-     links: %{"GitHub" => "https://github.com/jcabotc/hare"}]
+     links: %{"GitHub" => "https://github.com/salemove/hare"}]
   end
 end

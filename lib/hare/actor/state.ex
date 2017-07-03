@@ -1,4 +1,6 @@
 defmodule Hare.Actor.State do
+  @moduledoc false
+
   alias __MODULE__
   alias Hare.Core.Chan
 
