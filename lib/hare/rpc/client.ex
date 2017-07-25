@@ -100,6 +100,7 @@ defmodule Hare.RPC.Client do
   """
   @callback handle_connected(state) ::
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, state}
 
   @doc """
@@ -129,6 +130,7 @@ defmodule Hare.RPC.Client do
   """
   @callback handle_disconnected(reason :: term, state) ::
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, state}
 
   @doc """
@@ -146,9 +148,13 @@ defmodule Hare.RPC.Client do
   ones, block the client until the response is received, and enter
   the main loop with the given state.
 
-  Returning `{:reply, response, state}` will respond the client inmediately
+  Returning `{:reply, reply, state}` will respond the client inmediately
   without performing the request with the given response, and enter the main
   loop again with the given state.
+
+  Returning `{:reply, reply, state, timeout}` is similar to `{:reply, reply, state}`
+  except `handle_info(:timeout, state)` will be called after `timeout` milliseconds
+  if no messages are received.
 
   Returning `{:stop, reason, response, state}` will not send the message,
   respond to the caller with `response`, and terminate the main loop
@@ -163,6 +169,7 @@ defmodule Hare.RPC.Client do
               {:ok, state} |
               {:ok, payload, routing_key, opts :: term, state} |
               {:reply, response, state} |
+              {:reply, response, state, timeout | :hibernate} |
               {:stop, reason :: term, response, state} |
               {:stop, reason :: term, state}
 
@@ -176,9 +183,17 @@ defmodule Hare.RPC.Client do
   delivered to the caller instead of the original response, and enter
   the main loop with the given state.
 
+  Returning `{:reply, reply, state, timeout}` is similar to  `{:reply, reply, state}`
+  except `handle_info(:timeout, state)` will be called after timeout milliseconds
+  if no messages are received.
+
   Returning `{:noreply, state}` will enter the main loop with the given state
   without responding to the caller (that will eventually timeout or keep blocked
   forever if the timeout was set to `:infinity`).
+
+  Returning `{:noreply, state, timeout}` is similar to  `{:noreply, state}` except
+  `handle_info(:timeout, state)` will be called after timeout milliseconds if no
+  messages are received.
 
   Returning `{:stop, reason, reply, state}` will deliver the given reply to
   the caller instead of the original response and call `terminate(reason, state)`
@@ -189,7 +204,9 @@ defmodule Hare.RPC.Client do
   """
   @callback on_response(response, from, state) ::
               {:reply, response, state} |
+              {:reply, response, state, timeout | :hibernate} |
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, response, state} |
               {:stop, reason :: term, state}
 
@@ -216,7 +233,9 @@ defmodule Hare.RPC.Client do
   """
   @callback on_return(payload, state) ::
               {:reply, response, state} |
+              {:reply, response, state, timeout | :hibernate} |
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, response, state} |
               {:stop, reason :: term, state}
 
@@ -242,7 +261,9 @@ defmodule Hare.RPC.Client do
   """
   @callback on_timeout(from, state) ::
               {:reply, response, state} |
+              {:reply, response, state, timeout | :hibernate} |
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, response, state} |
               {:stop, reason :: term, state}
 
@@ -250,6 +271,8 @@ defmodule Hare.RPC.Client do
   Called when the process receives a call message sent by `call/3`. This
   callback has the same arguments as the `GenServer` equivalent and the
   `:reply`, `:noreply` and `:stop` return tuples behave the same.
+
+  See `c:GenServer.handle_call/3`.
   """
   @callback handle_call(request :: term, GenServer.from, state) ::
               {:reply, reply :: term, state} |
@@ -263,6 +286,8 @@ defmodule Hare.RPC.Client do
   Called when the process receives a cast message sent by `cast/3`. This
   callback has the same arguments as the `GenServer` equivalent and the
   `:noreply` and `:stop` return tuples behave the same.
+
+  See `c:GenServer.handle_cast/2`.
   """
   @callback handle_cast(request :: term, state) ::
               {:noreply, state} |
@@ -270,17 +295,15 @@ defmodule Hare.RPC.Client do
               {:stop, reason :: term, state}
 
   @doc """
-  Called when the process receives a message.
+  Called when the process receives a message. This callback has the same
+  arguments as the `GenServer` equivalent and the `:noreply` and `:stop`
+  return tuples behave the same.
 
-  Returning `{:noreply, state}` will causes the process to enter the main loop
-  with the given state.
-
-  Returning `{:stop, reason, state}` will not send the message, terminate the
-  main loop and call `terminate(reason, state)` before the process exits with
-  reason `reason`.
+  See `c:GenServer.handle_info/2`.
   """
   @callback handle_info(meta, state) ::
               {:noreply, state} |
+              {:noreply, state, timeout | :hibernate} |
               {:stop, reason :: term, state}
 
   @doc """
@@ -629,8 +652,15 @@ defmodule Hare.RPC.Client do
         GenServer.reply(from, response)
         {:noreply, State.set(state, new_given)}
 
+      {:reply, response, new_given, timeout} ->
+        GenServer.reply(from, response)
+        {:noreply, State.set(state, new_given), timeout}
+
       {:noreply, new_given} ->
         {:noreply, State.set(state, new_given)}
+
+      {:noreply, new_given, timeout} ->
+        {:noreply, State.set(state, new_given), timeout}
 
       {:stop, reason, response, new_given} ->
         GenServer.reply(from, response)
