@@ -5,6 +5,10 @@ defmodule Hare.Adapter.Sandbox.Chan do
   alias __MODULE__.Pid
   alias Hare.Adapter.Sandbox.Conn
 
+  @type t :: %Chan{
+              pid: pid,
+              conn: Conn.t}
+
   defstruct [:pid, :conn]
 
   def open(%Conn{} = conn) do

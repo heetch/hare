@@ -4,6 +4,11 @@ defmodule Hare.Adapter.Sandbox.Conn do
   alias __MODULE__
   alias __MODULE__.{Pid, History, Stack}
 
+  @type t :: %Conn{pid: pid,
+                   history: GenServer.server,
+                   on_channel_open: GenServer.server,
+                   messages: list}
+
   defstruct [:pid, :history, :on_channel_open, :messages]
 
   def open(config) do
