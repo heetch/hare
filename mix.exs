@@ -12,7 +12,7 @@ defmodule Hare.Mixfile do
      deps: deps(),
      dialyzer: [
        flags: [:error_handling],
-       remove_defaults: [:unknown]]
+       plt_add_apps: [:amqp]]
     ]
   end
 
