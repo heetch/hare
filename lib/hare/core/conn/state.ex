@@ -104,7 +104,8 @@ defmodule Hare.Core.Conn.State do
     reply.(client, {:ok, Chan.new(given_chan, bridge.adapter)})
     state
   end
-  defp handle_open_channel(:not_connected, %{waiting: waiting} = state, client) do
+  defp handle_open_channel(reason, %{waiting: waiting} = state, client)
+       when reason in [:not_connected, :closing, :blocked] do
     %{state | waiting: Waiting.push(waiting, client)}
   end
   defp handle_open_channel({:error, _reason} = error, %{reply: reply} = state, client) do

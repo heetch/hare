@@ -3,7 +3,7 @@ defmodule Hare.Mixfile do
 
   def project do
     [app: :hare,
-     version: "0.2.0",
+     version: "0.2.1",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -12,7 +12,7 @@ defmodule Hare.Mixfile do
      deps: deps(),
      dialyzer: [
        flags: [:error_handling],
-       remove_defaults: [:unknown]]
+       plt_add_apps: [:amqp]]
     ]
   end
 

@@ -142,14 +142,14 @@ defmodule Hare.Actor do
       {:reply, reply, new_given} ->
         {:reply, reply, State.set(state, new_given)}
 
-      {:reply, reply, new_given, hibernate} ->
-        {:reply, reply, State.set(state, new_given), hibernate}
+      {:reply, reply, new_given, timeout} ->
+        {:reply, reply, State.set(state, new_given), timeout}
 
       {:noreply, new_given} ->
         {:noreply, State.set(state, new_given)}
 
-      {:noreply, new_given, hibernate} ->
-        {:noreply, State.set(state, new_given), hibernate}
+      {:noreply, new_given, timeout} ->
+        {:noreply, State.set(state, new_given), timeout}
 
       {:stop, reason, reply, new_given} ->
         {:stop, reason, reply, State.set(state, new_given)}
@@ -165,8 +165,8 @@ defmodule Hare.Actor do
       {:noreply, new_given} ->
         {:noreply, State.set(state, new_given)}
 
-      {:noreply, new_given, hibernate} ->
-        {:noreply, State.set(state, new_given), hibernate}
+      {:noreply, new_given, timeout} ->
+        {:noreply, State.set(state, new_given), timeout}
 
       {:stop, reason, new_given} ->
         {:stop, reason, State.set(state, new_given)}
@@ -188,8 +188,8 @@ defmodule Hare.Actor do
       {:noreply, new_given} ->
         {:noreply, State.set(state, new_given)}
 
-      {:noreply, new_given, hibernate} ->
-        {:noreply, State.set(state, new_given), hibernate}
+      {:noreply, new_given, timeout} ->
+        {:noreply, State.set(state, new_given), timeout}
 
       {:stop, reason, new_given} ->
         {:stop, reason, State.set(state, new_given)}

@@ -17,11 +17,11 @@ defmodule Hare.Core.Conn do
   By default the timeout is 5 seconds.
   """
 
-  @type config :: State.Bridge.config
-
   use Connection
 
   alias __MODULE__.State
+
+  @type config :: State.Bridge.config
 
   @doc """
   Starts a `Hare.Core.Conn` process linked to the current process.
