@@ -73,7 +73,8 @@ defmodule Hare.Adapter.AMQPTest do
 
     Process.exit(conn_pid, :kill)
     assert_receive {:DOWN, ^conn_ref, _, _, :killed}
-    assert_receive {:DOWN, ^chan_ref, _, _, :killed}
-    assert_receive {:EXIT, ^chan_pid, :killed}
+    # amqp_client closes channels with reason :shutdown since 3.6.11
+    assert_receive {:DOWN, ^chan_ref, _, _, reason} when reason in [:killed, :shutdown]
+    assert_receive {:EXIT, ^chan_pid, ^reason}
   end
 end
