@@ -4,6 +4,7 @@ defmodule Hare.Publisher do
 
   The `Hare.Publisher` module provides a way to create processes that hold,
   monitor, and restart a channel in case of failure, exports a function to publish
+
   messages to an exchange, and some callbacks to hook into the process lifecycle.
 
   An example `Hare.Publisher` process that only sends every other message:
@@ -34,6 +35,8 @@ defmodule Hare.Publisher do
   ```
 
   ## Channel handling
+
+
 
   When the `Hare.Publisher` starts with `start_link/5` it runs the `init/1` callback
   and responds with `{:ok, pid}` on success, like a GenServer.
@@ -291,6 +294,10 @@ defmodule Hare.Publisher do
   def publish(client, payload, routing_key \\ "", opts \\ []),
     do: Hare.Actor.cast(client, {:"$hare_publication", payload, routing_key, opts})
 
+  @spec sync_publish(GenServer.server, payload :: term, routing_key, opts) :: :ok | {:error, term}
+  def sync_publish(client, payload, routing_key \\ "", opts \\ []),
+    do: Hare.Actor.call(client, {:"$hare_publication", payload, routing_key, opts})
+
   @doc false
   def init({config, context, mod, initial}) do
     with {:ok, declaration} <- build_declaration(config, context),
@@ -337,6 +344,24 @@ defmodule Hare.Publisher do
         {:stop, reason, State.set(new_state, new_given)}
     end
   end
+
+  @doc false
+  def handle_call({:"$hare_publication", payload, key, opts}, _from, %{mod: mod, given: given} = state) do
+    case mod.before_publication(payload, key, opts, given) do
+      {:ok, new_given} ->
+        sync_perform(payload, key, opts, new_given, state)
+
+      {:ok, new_payload, new_routing_key, new_opts, new_given} ->
+        sync_perform(new_payload, new_routing_key, new_opts, new_given, state)
+
+      {:ignore, new_given} ->
+        {:reply, :ignored, State.set(state, new_given)}
+
+      {:stop, reason, new_given} ->
+        {:stop, reason, State.set(state, new_given)}
+    end
+  end
+
 
   @doc false
   def handle_call(message, from, %{mod: mod, given: given} = state) do
@@ -401,6 +426,24 @@ defmodule Hare.Publisher do
       {:stop, reason, new_given} ->
         {:stop, reason, State.set(state, new_given)}
     end
+  end
+
+  defp sync_perform(_payload, _key, _opts, given, %{connected: false} = state) do
+    {:reply, {:error, :disconnected}, State.set(state, given)}
+  end
+  defp sync_perform(payload, key, opts, given, %{mod: mod, exchange: exchange} = state) do
+    case Exchange.publish(exchange, payload, key, opts) do
+      :ok -> 
+        case mod.after_publication(payload, key, opts, given) do
+          {:ok, new_given} ->
+            {:reply, :ok, State.set(state, new_given)}
+
+          {:stop, reason, new_given} ->
+            {:stop, reason, State.set(state, new_given)}
+        end
+      e -> e
+    end
+
   end
 
   defp handle_async(message, fun, %{mod: mod, given: given} = state) do
