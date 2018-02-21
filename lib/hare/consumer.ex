@@ -95,13 +95,16 @@ defmodule Hare.Consumer do
   Called when the consumer process has opened AMQP channel before registering
   itself as a consumer in AMQP broker.
 
+  Further declaration such as a dead letter exchange and queue can be performed
+  during this callback with the `chan` argument. 
+
   Returning `{:noreply, state}` will cause the process to enter the main loop
   with the given state.
 
   Returning `{:stop, reason, state}` will terminate the main loop and call
   `terminate(reason, state)` before the process exits with reason `reason`.
   """
-  @callback handle_connected(state) ::
+  @callback handle_connected(Hare.Adapter.chan, state) ::
               {:noreply, state} |
               {:stop, reason :: term, state}
 
@@ -215,7 +218,7 @@ defmodule Hare.Consumer do
         do: {:ok, initial}
 
       @doc false
-      def handle_connected(state),
+      def handle_connected(chan, state),
         do: {:noreply, state}
 
       @doc false
@@ -247,7 +250,7 @@ defmodule Hare.Consumer do
         do: :ok
 
       defoverridable [init: 1, terminate: 2,
-                      handle_connected: 1, handle_ready: 2, handle_disconnected: 2,
+                      handle_connected: 2, handle_ready: 2, handle_disconnected: 2,
                       handle_message: 3,
                       handle_call: 3, handle_cast: 2, handle_info: 2]
     end
@@ -344,7 +347,7 @@ defmodule Hare.Consumer do
 
   @doc false
   def connected(chan, %{mod: mod, given: given, declaration: declaration} = state) do
-    with {:noreply, new_given}  <- mod.handle_connected(given),
+    with {:noreply, new_given}  <- mod.handle_connected(chan, given),
          new_state              <- State.set(state, new_given),
          {:ok, queue, exchange} <- Declaration.run(declaration, chan),
          {:ok, new_queue}       <- Queue.consume(queue) do

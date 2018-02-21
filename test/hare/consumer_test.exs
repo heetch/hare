@@ -10,7 +10,7 @@ defmodule Hare.ConsumerTest do
     def start_link(conn, config, pid),
       do: Consumer.start_link(__MODULE__, conn, config, pid)
 
-    def handle_connected(pid) do
+    def handle_connected(_chan, pid) do
       send(pid, :connected)
       {:noreply, pid}
     end
